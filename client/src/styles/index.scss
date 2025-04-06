@@ -1,0 +1,36 @@
+@import "variables";
+@import "~bootstrap/scss/bootstrap";
+
+// Global styles
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content-wrapper {
+  display: flex;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  padding-top: 80px;
+  
+  @media (min-width: 992px) {
+    margin-left: 250px;
+  }
+}
+
+// Custom components
+@import "components/navbar";
+@import "components/sidebar";
+@import "components/footer";
+
