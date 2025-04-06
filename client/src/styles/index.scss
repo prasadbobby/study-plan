@@ -1,9 +1,19 @@
+// client/src/styles/index.scss
 @import "variables";
+
+// Import component specific styles before bootstrap
+@import "components/cards";
+@import "components/buttons";
+@import "components/forms";
+@import "components/tracking";
+@import "components/generate";
+@import "components/login";
+// Import Bootstrap
 @import "~bootstrap/scss/bootstrap";
 
 // Global styles
 body {
-  font-family: "Poppins", sans-serif;
+  font-family: $font-family-sans-serif;
   background-color: #f8f9fa;
   color: #333;
 }
@@ -29,8 +39,7 @@ body {
   }
 }
 
-// Custom components
+// Other component styles
 @import "components/navbar";
 @import "components/sidebar";
 @import "components/footer";
-

@@ -127,14 +127,33 @@ class FirestoreService {
    */
   async updateProgress(userId, planId, progressData) {
     try {
-      console.log(`Updating progress for plan ${planId}`);
-      await db.collection('users').doc(userId).collection('plans').doc(planId).update({
+      console.log(`Updating progress for plan ${planId}:`, progressData);
+      
+      // Ensure data is valid
+      if (typeof progressData.progress !== 'number') {
+        throw new Error("Progress must be a number");
+      }
+      
+      if (!Array.isArray(progressData.completedTopics)) {
+        throw new Error("Completed topics must be an array");
+      }
+      
+      // First get the current plan data
+      const planRef = db.collection('users').doc(userId).collection('plans').doc(planId);
+      const planDoc = await planRef.get();
+      
+      if (!planDoc.exists) {
+        throw new Error(`Plan ${planId} not found`);
+      }
+      
+      // Update with new progress data
+      await planRef.update({
         progress: progressData.progress,
         completedTopics: progressData.completedTopics,
         updatedAt: new Date()
       });
       
-      console.log(`Progress updated for plan ${planId}`);
+      console.log(`Progress updated for plan ${planId} to ${progressData.progress}%`);
       return true;
     } catch (error) {
       console.error("Error updating progress:", error);

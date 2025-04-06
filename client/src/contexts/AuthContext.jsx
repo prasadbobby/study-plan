@@ -1,13 +1,7 @@
 // client/src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../services/firebase';
-import { 
-  loginWithEmail, 
-  registerWithEmail, 
-  logoutUser, 
-  resetPassword, 
-  signInWithGoogle 
-} from '../services/firebase';
+import { signInWithGoogle, logoutUser } from '../services/firebase';
 
 const AuthContext = createContext();
 
@@ -30,35 +24,11 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  // Login function
-  const login = async (email, password) => {
-    setError(null);
-    try {
-      await loginWithEmail(email, password);
-      return true;
-    } catch (error) {
-      setError(error.message);
-      return false;
-    }
-  };
-
   // Google login function
   const loginWithGoogle = async () => {
     setError(null);
     try {
       await signInWithGoogle();
-      return true;
-    } catch (error) {
-      setError(error.message);
-      return false;
-    }
-  };
-
-  // Register function
-  const register = async (email, password, displayName) => {
-    setError(null);
-    try {
-      await registerWithEmail(email, password, displayName);
       return true;
     } catch (error) {
       setError(error.message);
@@ -78,25 +48,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Password reset function
-  const resetUserPassword = async (email) => {
-    setError(null);
-    try {
-      await resetPassword(email);
-      return true;
-    } catch (error) {
-      setError(error.message);
-      return false;
-    }
-  };
-
   const value = {
     currentUser,
-    login,
     loginWithGoogle,
-    register,
     logout,
-    resetUserPassword,
     error,
     loading
   };

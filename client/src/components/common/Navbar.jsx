@@ -7,7 +7,7 @@ import { Navbar as BootstrapNavbar, Container, Nav, NavDropdown, Image } from 'r
 const Navbar = () => {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -24,9 +24,9 @@ const Navbar = () => {
           <i className="bi bi-book me-2"></i>
           Study Plan Generator
         </BootstrapNavbar.Brand>
-        
+
         <BootstrapNavbar.Toggle aria-controls="navbar-nav" />
-        
+
         <BootstrapNavbar.Collapse id="navbar-nav">
           <Nav className="ms-auto">
             {currentUser ? (
@@ -34,15 +34,15 @@ const Navbar = () => {
                 <Nav.Link as={Link} to="/">Home</Nav.Link>
                 <Nav.Link as={Link} to="/generate">Generate</Nav.Link>
                 <Nav.Link as={Link} to="/history">History</Nav.Link>
-                
-                <NavDropdown 
+
+                <NavDropdown
                   title={
                     <span>
                       {currentUser.photoURL && (
-                        <Image 
-                          src={currentUser.photoURL} 
-                          alt="Profile" 
-                          roundedCircle 
+                        <Image
+                          src={currentUser.photoURL}
+                          alt="Profile"
+                          roundedCircle
                           className="me-2"
                           width="24"
                           height="24"
@@ -50,7 +50,7 @@ const Navbar = () => {
                       )}
                       {currentUser.displayName || currentUser.email}
                     </span>
-                  } 
+                  }
                   id="user-dropdown"
                   align="end"
                 >
@@ -58,10 +58,7 @@ const Navbar = () => {
                 </NavDropdown>
               </>
             ) : (
-              <>
-                <Nav.Link as={Link} to="/login">Login</Nav.Link>
-                <Nav.Link as={Link} to="/register">Register</Nav.Link>
-              </>
+              <Nav.Link as={Link} to="/login">Login</Nav.Link>
             )}
           </Nav>
         </BootstrapNavbar.Collapse>

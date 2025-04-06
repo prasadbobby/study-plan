@@ -11,7 +11,6 @@ const api = axios.create({
   }
 });
 
-
 export const generateStudyPlan = async (planParams, saveToDatabase = true) => {
   try {
     // If saveToDatabase is false, add a query parameter to tell the server not to save
@@ -66,6 +65,17 @@ export const deletePlan = async (planId) => {
 
 export const updateProgress = async (planId, progressData) => {
   try {
+    console.log('Updating progress via API for plan:', planId, 'with data:', progressData);
+    
+    // Validate data before sending
+    if (typeof progressData.progress !== 'number') {
+      throw new Error('Progress must be a number');
+    }
+    
+    if (!Array.isArray(progressData.completedTopics)) {
+      throw new Error('Completed topics must be an array');
+    }
+    
     const response = await api.patch(`/plans/${planId}/progress`, progressData);
     return response.data;
   } catch (error) {
@@ -83,8 +93,6 @@ export const toggleStarPlan = async (planId, isStarred) => {
     throw error;
   }
 };
-// client/src/services/planService.js
-// Add this function
 
 export const savePlan = async (planParams, generatedPlan) => {
   try {

@@ -10,10 +10,12 @@ import {
   Badge, 
   Form, 
   InputGroup,
-  Alert
+  Alert,
+  ProgressBar
 } from 'react-bootstrap';
-import { FaSearch, FaTimes, FaPlus, FaStar } from 'react-icons/fa';
+import { FaSearch, FaTimes, FaPlus, FaStar, FaRegStar } from 'react-icons/fa';
 import axios from 'axios';
+import { Loader } from '../components/common';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -46,6 +48,27 @@ const History = () => {
     
     fetchPlans();
   }, []);
+  
+  // Toggle star status
+  const handleToggleStar = async (e, planId, isStarred) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred: !isStarred });
+      
+      // Update local state
+      setPlans(prevPlans => 
+        prevPlans.map(plan => 
+          plan.id === planId 
+            ? { ...plan, isStarred: !isStarred } 
+            : plan
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling star status:', err);
+    }
+  };
   
   // Filter plans based on search term and active filter
   const getFilteredPlans = () => {
@@ -95,9 +118,7 @@ const History = () => {
         </div>
         
         <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+          <Loader size="lg" />
           <p className="mt-3">Loading your study plans...</p>
         </div>
       </Container>
@@ -208,54 +229,57 @@ const History = () => {
       ) : (
         <div className="plans-list">
           {filteredPlans.map((plan) => (
-            <Card key={plan.id} className="mb-3 shadow-sm">
-              <Card.Body>
+            <Card key={plan.id} className="mb-3 shadow-sm border-0 rounded-3">
+              <Card.Body className="p-4">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <Link to={`/tracking/${plan.id}`} className="text-decoration-none">
-                      <h5 className="mb-1">{plan.title}</h5>
+                    <Link 
+                      to={`/tracking/${plan.id}`} 
+                      className="text-decoration-none"
+                    >
+                      <h5 className="mb-1 fw-bold">{plan.title}</h5>
                     </Link>
                     <p className="text-muted small mb-2">{plan.description}</p>
                   </div>
-                  {plan.isStarred && (
-                    <FaStar className="text-warning" size={20} />
-                  )}
+                  <Button 
+                    variant="link" 
+                    className="text-warning p-0 border-0"
+                    onClick={(e) => handleToggleStar(e, plan.id, plan.isStarred)}
+                    title={plan.isStarred ? "Unstar plan" : "Star plan"}
+                  >
+                    {plan.isStarred ? <FaStar size={20} /> : <FaRegStar size={20} />}
+                  </Button>
                 </div>
 
                 <div className="d-flex flex-wrap gap-2 mb-3">
                   {plan.params && (
                     <>
-                      <Badge bg="primary">{plan.params.subject}</Badge>
-                      <Badge bg="secondary">{plan.params.difficulty}</Badge>
-                      <Badge bg="info">
+                      <Badge bg="primary" className="py-2 px-3">{plan.params.subject}</Badge>
+                      <Badge bg="secondary" className="py-2 px-3 text-capitalize">{plan.params.difficulty}</Badge>
+                      <Badge bg="info" className="py-2 px-3">
                         {plan.params.duration} days
                       </Badge>
                     </>
                   )}
                 </div>
 
-                <div>
+                <div className="mb-3">
                   <div className="d-flex justify-content-between align-items-center small mb-1">
                     <span>Progress</span>
-                    <span>{plan.progress || 0}%</span>
+                    <span className="fw-bold">{plan.progress || 0}%</span>
                   </div>
-                  <div className="progress" style={{ height: '8px' }}>
-                    <div 
-                      className={`progress-bar bg-${
-                        (plan.progress || 0) < 30 ? 'danger' : 
-                        (plan.progress || 0) < 70 ? 'warning' : 
-                        'success'
-                      }`}
-                      role="progressbar"
-                      style={{ width: `${plan.progress || 0}%` }}
-                      aria-valuenow={plan.progress || 0}
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                    ></div>
-                  </div>
+                  <ProgressBar 
+                    now={plan.progress || 0} 
+                    variant={
+                      (plan.progress || 0) < 30 ? 'danger' : 
+                      (plan.progress || 0) < 70 ? 'warning' : 
+                      'success'
+                    } 
+                    style={{ height: '8px' }}
+                  />
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center mt-3">
+                <div className="d-flex justify-content-between align-items-center">
                   <div className="small text-muted">
                     {plan.params && (
                       <>

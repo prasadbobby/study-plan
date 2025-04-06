@@ -2,13 +2,9 @@
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut,
-  sendPasswordResetEmail,
-  updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  signOut
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -28,22 +24,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Authentication functions
-export const loginWithEmail = (email, password) => {
-  return signInWithEmailAndPassword(auth, email, password);
-};
-
-export const registerWithEmail = async (email, password, displayName) => {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  
-  // Update profile with display name
-  await updateProfile(userCredential.user, {
-    displayName
-  });
-  
-  return userCredential;
-};
-
+// Sign in with Google
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -54,12 +35,9 @@ export const signInWithGoogle = async () => {
   }
 }; 
 
+// Sign out
 export const logoutUser = () => {
   return signOut(auth);
-};
-
-export const resetPassword = (email) => {
-  return sendPasswordResetEmail(auth, email);
 };
 
 export { auth, db };

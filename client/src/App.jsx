@@ -11,7 +11,6 @@ import Generate from "./pages/Generate";
 import History from "./pages/History";
 import Tracking from "./pages/Tracking";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import "./styles/index.scss";
 
@@ -22,26 +21,25 @@ const App = () => {
         <Router>
           <div className="app-container">
             <Navbar />
-            
+
             <div className="content-wrapper">
               <Sidebar />
-              
+
               <main className="main-content">
                 <Routes>
                   <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  
+
                   <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
                   <Route path="/generate" element={<PrivateRoute><Generate /></PrivateRoute>} />
                   <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
                   <Route path="/tracking/:planId" element={<PrivateRoute><Tracking /></PrivateRoute>} />
-                  
+
                   <Route path="/404" element={<NotFound />} />
                   <Route path="*" element={<Navigate to="/404" />} />
                 </Routes>
               </main>
             </div>
-            
+
             <Footer />
           </div>
         </Router>

@@ -9,5 +9,6 @@ build
 dist
 firebase-service-account.json
 .vscode
+package-lock.json
 
 

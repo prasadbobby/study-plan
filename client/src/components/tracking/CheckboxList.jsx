@@ -1,61 +1,47 @@
 // client/src/components/tracking/CheckboxList.jsx
 import React from 'react';
-import { Form, Accordion } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
+import { FaCheckCircle } from 'react-icons/fa';
 
-const CheckboxList = ({ topics, completedTopics, onToggle }) => {
-  // Function to check if a topic is completed
-  const isCompleted = (topicId) => {
-    return completedTopics.includes(topicId);
-  };
-  
+const CheckboxList = ({ items, completedItems, onToggle, idPrefix = 'item' }) => {
   // Handle checkbox change
-  const handleCheckboxChange = (e, topicId) => {
-    onToggle(topicId, e.target.checked);
+  const handleCheckboxChange = (e, itemId) => {
+    onToggle(itemId, e.target.checked);
   };
 
   return (
     <div className="checkbox-list">
-      {topics.map((topic, index) => {
-        // For topics that might be strings or objects
-        const topicId = topic.id || `topic-${index}`;
-        const topicTitle = topic.title || topic.name || topic;
-        const subtopics = topic.subtopics || [];
+      {items.map((item, index) => {
+        // For items that might be strings or objects
+        const itemName = typeof item === 'string' ? item : (item.title || item.name || item);
+        const itemId = `${idPrefix}-${index}`;
+        const isCompleted = completedItems.includes(itemId);
         
         return (
-          <div key={topicId} className="topic-item mb-3">
-            <Form.Check
-              type="checkbox"
-              id={topicId}
-              label={topicTitle}
-              checked={isCompleted(topicId)}
-              onChange={(e) => handleCheckboxChange(e, topicId)}
-              className="mb-2 fw-bold"
-            />
-            
-            {subtopics.length > 0 && (
-              <Accordion className="ms-4 mt-2">
-                <Accordion.Item eventKey="0">
-                  <Accordion.Header>Subtopics ({subtopics.length})</Accordion.Header>
-                  <Accordion.Body>
-                    {subtopics.map((subtopic, subIndex) => {
-                      const subtopicId = subtopic.id || `${topicId}-sub-${subIndex}`;
-                      const subtopicTitle = subtopic.title || subtopic.name || subtopic;
-                      
-                      return (
-                        <Form.Check
-                          key={subtopicId}
-                          type="checkbox"
-                          id={subtopicId}
-                          label={subtopicTitle}
-                          checked={isCompleted(subtopicId)}
-                          onChange={(e) => handleCheckboxChange(e, subtopicId)}
-                          className="mb-2"
-                        />
-                      );
-                    })}
-                  </Accordion.Body>
-                </Accordion.Item>
-              </Accordion>
+          <div key={itemId} className="topic-item p-3 mb-3 border rounded">
+            <div className="d-flex align-items-center">
+              <input
+                className="form-check-input me-3"
+                type="checkbox"
+                id={itemId}
+                checked={isCompleted}
+                onChange={(e) => handleCheckboxChange(e, itemId)}
+                style={{ width: "20px", height: "20px" }}
+              />
+              <label 
+                className={`form-check-label ${isCompleted ? 'text-decoration-line-through text-muted' : 'fw-medium'}`} 
+                htmlFor={itemId}
+              >
+                {itemName}
+              </label>
+              {isCompleted && (
+                <FaCheckCircle className="ms-auto text-success" />
+              )}
+            </div>
+            {item.description && (
+              <p className={`ms-4 ps-2 mb-0 small ${isCompleted ? 'text-muted' : ''}`}>
+                {item.description}
+              </p>
             )}
           </div>
         );

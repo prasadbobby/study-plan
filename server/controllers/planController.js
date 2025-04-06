@@ -88,17 +88,35 @@ exports.getUserPlans = async (req, res) => {
   }
 };
 
+// server/controllers/planController.js
 exports.getPlan = async (req, res) => {
   try {
     const userId = FIXED_USER_ID;
     const planId = req.params.planId;
     
-    const plan = await firestoreService.getPlan(userId, planId);
+    console.log(`Request for plan ${planId} from user ${userId}`);
     
-    res.status(200).json(success(plan));
+    // Add cache control headers to prevent browser caching
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    try {
+      const plan = await firestoreService.getPlan(userId, planId);
+      
+      console.log(`Successfully retrieved plan ${planId}`);
+      res.status(200).json(success(plan));
+    } catch (err) {
+      console.error(`Error retrieving plan ${planId}:`, err.message);
+      
+      if (err.message === "Plan not found") {
+        return res.status(404).json(error("Plan not found"));
+      }
+      throw err;
+    }
   } catch (err) {
     console.error("Error in getPlan:", err);
-    res.status(404).json(error("Failed to retrieve the plan", err.message));
+    res.status(500).json(error("Failed to retrieve the plan", err.message));
   }
 };
 
@@ -137,9 +155,25 @@ exports.updateProgress = async (req, res) => {
     const planId = req.params.planId;
     const progressData = req.body;
     
+    console.log(`Received progress update for plan ${planId}:`, progressData);
+    
+    // Validate progress data
+    if (typeof progressData.progress !== 'number') {
+      return res.status(400).json(error("Invalid progress value"));
+    }
+    
+    if (!Array.isArray(progressData.completedTopics)) {
+      return res.status(400).json(error("Completed topics must be an array"));
+    }
+    
     await firestoreService.updateProgress(userId, planId, progressData);
     
-    res.status(200).json(success(null, "Progress updated successfully"));
+    res.status(200).json(success({ 
+      updated: true,
+      planId,
+      progress: progressData.progress,
+      completedTopicsCount: progressData.completedTopics.length
+    }, "Progress updated successfully"));
   } catch (err) {
     console.error("Error in updateProgress:", err);
     res.status(500).json(error("Failed to update progress", err.message));

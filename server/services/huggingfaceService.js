@@ -23,7 +23,7 @@ class HuggingFaceService {
   async generateStudyPlan(params) {
     try {
       console.log("Starting AI plan generation with params:", params);
-      const { subject, duration, difficulty, startDate, endDate } = params;
+      const { subject, duration, difficulty, startDate, endDate, goals } = params;
       
       // Craft the prompt for Mistral
       const prompt = `
@@ -31,11 +31,12 @@ class HuggingFaceService {
         Create a detailed study plan for ${subject} with these parameters:
         - Duration: ${duration} days (from ${startDate} to ${endDate})
         - Difficulty: ${difficulty}
+        - Primary Goal: ${goals || "Master the fundamentals of the subject"}
         
         Respond with a valid JSON object only, structured like this:
         {
           "title": "${subject} Study Plan",
-          "description": "A comprehensive study plan for ${subject} tailored to ${difficulty} level",
+          "description": "A comprehensive study plan for ${subject} tailored to ${difficulty} level with a focus on ${goals || "mastering fundamentals"}",
           "topics": ["Main Topic 1", "Main Topic 2", "Main Topic 3", ...],
           "schedule": [
             {"date": "YYYY-MM-DD", "topics": "What to study", "hours": 2},
