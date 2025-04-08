@@ -5,6 +5,8 @@ import { Container, Row, Col, Card, Button, Alert, Badge, Modal, ProgressBar } f
 import { FaStar, FaRegStar, FaTrash, FaLink, FaBook, FaCode, FaVideo, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
 import axios from 'axios';
 import { Loader } from '../components/common';
+import { auth } from '../services/firebase';
+
 
 // Direct API endpoint
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -21,62 +23,100 @@ const Tracking = () => {
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Load plan data directly from API
-  useEffect(() => {
-    const fetchPlan = async () => {
-      if (!planId) return;
+// client/src/pages/Tracking.jsx - Update the fetchPlan function
+useEffect(() => {
+  const fetchPlan = async () => {
+    if (!planId) return;
 
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_URL}/plans/${planId}`);
-        const fetchedPlan = response.data.data;
-
-        setPlan(fetchedPlan);
-        setCompletedTopics(fetchedPlan.completedTopics || []);
-        setProgress(fetchedPlan.progress || 0);
-      } catch (err) {
-        console.error('Error loading plan:', err);
-        setError('Could not load plan. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlan();
-  }, [planId]);
-
-  // Toggle topic completion
-  const handleTopicToggle = async (topicId, isComplete) => {
-    if (!plan) return;
-
-    // Update local state immediately for responsive UI
-    let updatedTopics;
-    if (isComplete) {
-      updatedTopics = [...completedTopics, topicId];
-    } else {
-      updatedTopics = completedTopics.filter(id => id !== topicId);
-    }
-
-    setCompletedTopics(updatedTopics);
-
-    // Calculate new progress
-    const totalTopics = getTotalTopicsCount();
-    const newProgress = totalTopics ? Math.round((updatedTopics.length / totalTopics) * 100) : 0;
-    setProgress(newProgress);
-
-    // Send update to server
+    setLoading(true);
     try {
-      await axios.patch(`${API_URL}/plans/${planId}/progress`, {
-        completedTopics: updatedTopics,
-        progress: newProgress
+      const token = await auth.currentUser.getIdToken();
+      const response = await axios.get(`${API_URL}/plans/${planId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
+      const fetchedPlan = response.data.data;
+
+      setPlan(fetchedPlan);
+      setCompletedTopics(fetchedPlan.completedTopics || []);
+      setProgress(fetchedPlan.progress || 0);
     } catch (err) {
-      console.error('Failed to update progress:', err);
-      // Revert state if update fails
-      setCompletedTopics(completedTopics);
-      setProgress(progress);
+      console.error('Error loading plan:', err);
+      setError('Could not load plan. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
+
+  fetchPlan();
+}, [planId]);
+
+// Update handleTopicToggle
+const handleTopicToggle = async (topicId, isComplete) => {
+  if (!plan) return;
+
+  let updatedTopics;
+  if (isComplete) {
+    updatedTopics = [...completedTopics, topicId];
+  } else {
+    updatedTopics = completedTopics.filter(id => id !== topicId);
+  }
+
+  setCompletedTopics(updatedTopics);
+
+  const totalTopics = getTotalTopicsCount();
+  const newProgress = totalTopics ? Math.round((updatedTopics.length / totalTopics) * 100) : 0;
+  setProgress(newProgress);
+
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await axios.patch(`${API_URL}/plans/${planId}/progress`, 
+      {
+        completedTopics: updatedTopics,
+        progress: newProgress
+      },
+      { headers: { Authorization: `Bearer ${token}` }}
+    );
+  } catch (err) {
+    console.error('Failed to update progress:', err);
+    setCompletedTopics(completedTopics);
+    setProgress(progress);
+  }
+};
+
+// Update handleToggleStar
+const handleToggleStar = async () => {
+  if (!plan) return;
+
+  const newStarredStatus = !plan.isStarred;
+
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await axios.patch(`${API_URL}/plans/${planId}/star`, 
+      { isStarred: newStarredStatus },
+      { headers: { Authorization: `Bearer ${token}` }}
+    );
+    setPlan({ ...plan, isStarred: newStarredStatus });
+  } catch (err) {
+    console.error('Failed to update star status:', err);
+  }
+};
+
+// Update handleDeletePlan
+const handleDeletePlan = async () => {
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await axios.delete(`${API_URL}/plans/${planId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setShowDeleteModal(false);
+    navigate('/history');
+  } catch (err) {
+    console.error('Failed to delete plan:', err);
+    setError('Could not delete plan. Please try again.');
+  }
+};
 
   // Count total topics
   const getTotalTopicsCount = () => {
@@ -89,31 +129,9 @@ const Tracking = () => {
     return count;
   };
 
-  // Toggle star status
-  const handleToggleStar = async () => {
-    if (!plan) return;
 
-    const newStarredStatus = !plan.isStarred;
 
-    try {
-      await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred: newStarredStatus });
-      setPlan({ ...plan, isStarred: newStarredStatus });
-    } catch (err) {
-      console.error('Failed to update star status:', err);
-    }
-  };
 
-  // Delete plan
-  const handleDeletePlan = async () => {
-    try {
-      await axios.delete(`${API_URL}/plans/${planId}`);
-      setShowDeleteModal(false);
-      navigate('/history');
-    } catch (err) {
-      console.error('Failed to delete plan:', err);
-      setError('Could not delete plan. Please try again.');
-    }
-  };
 
   // Resource link generator
   const getResourceLink = (resource) => {

@@ -16,6 +16,7 @@ import {
 import { FaSearch, FaTimes, FaPlus, FaStar, FaRegStar } from 'react-icons/fa';
 import axios from 'axios';
 import { Loader } from '../components/common';
+import { auth } from '../services/firebase';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -26,49 +27,56 @@ const History = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   
-  // Fetch plans only once when component mounts
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${API_URL}/plans`);
-        if (response.data && response.data.data) {
-          setPlans(response.data.data);
-        } else {
-          setPlans([]);
-        }
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching plans:', err);
-        setError('Failed to load your study plans. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchPlans();
-  }, []);
-  
-  // Toggle star status
-  const handleToggleStar = async (e, planId, isStarred) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+useEffect(() => {
+  const fetchPlans = async () => {
     try {
-      await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred: !isStarred });
-      
-      // Update local state
-      setPlans(prevPlans => 
-        prevPlans.map(plan => 
-          plan.id === planId 
-            ? { ...plan, isStarred: !isStarred } 
-            : plan
-        )
-      );
+      setLoading(true);
+      const token = await auth.currentUser.getIdToken();
+      const response = await axios.get(`${API_URL}/plans`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data && response.data.data) {
+        setPlans(response.data.data);
+      } else {
+        setPlans([]);
+      }
+      setError(null);
     } catch (err) {
-      console.error('Error toggling star status:', err);
+      console.error('Error fetching plans:', err);
+      setError('Failed to load your study plans. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
+  
+  fetchPlans();
+}, []);
+
+// And handleToggleStar function
+const handleToggleStar = async (e, planId, isStarred) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await axios.patch(`${API_URL}/plans/${planId}/star`, 
+      { isStarred: !isStarred },
+      { headers: { Authorization: `Bearer ${token}` }}
+    );
+    
+    setPlans(prevPlans => 
+      prevPlans.map(plan => 
+        plan.id === planId 
+          ? { ...plan, isStarred: !isStarred } 
+          : plan
+      )
+    );
+  } catch (err) {
+    console.error('Error toggling star status:', err);
+  }
+};
   
   // Filter plans based on search term and active filter
   const getFilteredPlans = () => {

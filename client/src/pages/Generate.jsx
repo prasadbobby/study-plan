@@ -7,6 +7,8 @@ import PlanForm from '../components/generate/PlanForm';
 import PlanPreview from '../components/generate/PlanPreview';
 import { Loader } from '../components/common';
 import { FaSave, FaTimes, FaChartLine, FaLightbulb, FaBookOpen } from 'react-icons/fa';
+import { auth } from '../services/firebase';
+
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -28,59 +30,60 @@ const Generate = () => {
     setPlanId(null);
   }, []);
 
-  // Handle form submission to generate a plan
-  const handleSubmit = async (formParams) => {
-    console.log("Generating plan with params:", formParams);
-    setPlanParams(formParams);
-    setLoading(true);
-    setError(null);
+const handleSubmit = async (formParams) => {
+  console.log("Generating plan with params:", formParams);
+  setPlanParams(formParams);
+  setLoading(true);
+  setError(null);
 
-    try {
-      // Generate the plan but don't save to database yet
-      const response = await axios.post(`${API_URL}/plans/generate?save=false`, formParams);
-
-      if (response.data && response.data.data && response.data.data.plan) {
-        console.log("Plan generated:", response.data.data.plan);
-        setGeneratedPlan(response.data.data.plan);
-        setPlanId(null); // Clear plan ID since we haven't saved it yet
-      } else {
-        console.error("Failed to generate plan");
-        setError("Failed to generate plan. Please try again.");
+  try {
+    const response = await axios.post(`${API_URL}/plans/generate?save=false`, formParams, {
+      headers: {
+        Authorization: `Bearer ${await auth.currentUser.getIdToken()}`
       }
-    } catch (error) {
-      console.error("Error generating plan:", error);
-      setError("An error occurred while generating your plan. Please try again.");
-    } finally {
-      setLoading(false);
+    });
+
+    if (response.data && response.data.data && response.data.data.plan) {
+      setGeneratedPlan(response.data.data.plan);
+      setPlanId(null);
+    } else {
+      setError("Failed to generate plan. Please try again.");
     }
-  };
+  } catch (error) {
+    setError("An error occurred while generating your plan. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  // Save the plan to database
-  const handleSavePlan = async () => {
-    if (!generatedPlan || !planParams) return;
+// And handleSavePlan function
+const handleSavePlan = async () => {
+  if (!generatedPlan || !planParams) return;
 
-    setIsSaving(true);
+  setIsSaving(true);
 
-    try {
-      // Now save the plan to database
-      const response = await axios.post(`${API_URL}/plans/save`, {
-        params: planParams,
-        plan: generatedPlan
-      });
-
-      if (response.data && response.data.data && response.data.data.planId) {
-        setPlanId(response.data.data.planId);
-        setShowSuccessModal(true);
-      } else {
-        setError("Failed to save plan. Please try again.");
+  try {
+    const response = await axios.post(`${API_URL}/plans/save`, {
+      params: planParams,
+      plan: generatedPlan
+    }, {
+      headers: {
+        Authorization: `Bearer ${await auth.currentUser.getIdToken()}`
       }
-    } catch (error) {
-      console.error("Error saving plan:", error);
-      setError("An error occurred while saving your plan. Please try again.");
-    } finally {
-      setIsSaving(false);
+    });
+
+    if (response.data && response.data.data && response.data.data.planId) {
+      setPlanId(response.data.data.planId);
+      setShowSuccessModal(true);
+    } else {
+      setError("Failed to save plan. Please try again.");
     }
-  };
+  } catch (error) {
+    setError("An error occurred while saving your plan. Please try again.");
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   // Navigate to the tracking page for the generated plan
   const handleViewPlan = () => {
