@@ -2,7 +2,7 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const HF_TOKEN = process.env.HUGGINGFACE_TOKEN || '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';
+const HF_TOKEN = process.env.HUGGINGFACE_TOKEN || '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';
 const HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.3';
 
 class HuggingFaceService {
