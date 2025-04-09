@@ -4,21 +4,23 @@ import { auth } from './firebase';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-const getAuthHeader = () => {
+const getHeaders = () => {
   const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
+  
   return {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-ID': currentUser ? currentUser.uid : 'default-user'
-    }
+    'Content-Type': 'application/json',
+    'X-User-ID': currentUser.uid
   };
 };
 
 export const generateStudyPlan = async (planParams, saveToDatabase = true) => {
   try {
-    const config = getAuthHeader();
+    const headers = getHeaders();
     const url = saveToDatabase ? '/plans/generate' : '/plans/generate?save=false';
-    const response = await axios.post(`${API_URL}${url}`, planParams, config);
+    const response = await axios.post(`${API_URL}${url}`, planParams, { headers });
     return response.data;
   } catch (error) {
     console.error('Error generating study plan:', error);
@@ -28,8 +30,8 @@ export const generateStudyPlan = async (planParams, saveToDatabase = true) => {
 
 export const getUserPlans = async () => {
   try {
-    const config = getAuthHeader();
-    const response = await axios.get(`${API_URL}/plans`, config);
+    const headers = getHeaders();
+    const response = await axios.get(`${API_URL}/plans`, { headers });
     return response.data;
   } catch (error) {
     console.error('Error fetching user plans:', error);
@@ -39,8 +41,8 @@ export const getUserPlans = async () => {
 
 export const getPlan = async (planId) => {
   try {
-    const config = getAuthHeader();
-    const response = await axios.get(`${API_URL}/plans/${planId}`, config);
+    const headers = getHeaders();
+    const response = await axios.get(`${API_URL}/plans/${planId}`, { headers });
     return response.data;
   } catch (error) {
     console.error('Error fetching plan:', error);
@@ -50,8 +52,8 @@ export const getPlan = async (planId) => {
 
 export const updatePlan = async (planId, updates) => {
   try {
-    const config = getAuthHeader();
-    const response = await axios.put(`${API_URL}/plans/${planId}`, updates, config);
+    const headers = getHeaders();
+    const response = await axios.put(`${API_URL}/plans/${planId}`, updates, { headers });
     return response.data;
   } catch (error) {
     console.error('Error updating plan:', error);
@@ -61,8 +63,8 @@ export const updatePlan = async (planId, updates) => {
 
 export const deletePlan = async (planId) => {
   try {
-    const config = getAuthHeader();
-    const response = await axios.delete(`${API_URL}/plans/${planId}`, config);
+    const headers = getHeaders();
+    const response = await axios.delete(`${API_URL}/plans/${planId}`, { headers });
     return response.data;
   } catch (error) {
     console.error('Error deleting plan:', error);
@@ -80,8 +82,8 @@ export const updateProgress = async (planId, progressData) => {
       throw new Error('Completed topics must be an array');
     }
     
-    const config = getAuthHeader();
-    const response = await axios.patch(`${API_URL}/plans/${planId}/progress`, progressData, config);
+    const headers = getHeaders();
+    const response = await axios.patch(`${API_URL}/plans/${planId}/progress`, progressData, { headers });
     return response.data;
   } catch (error) {
     console.error('Error updating progress:', error);
@@ -91,8 +93,8 @@ export const updateProgress = async (planId, progressData) => {
 
 export const toggleStarPlan = async (planId, isStarred) => {
   try {
-    const config = getAuthHeader();
-    const response = await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred }, config);
+    const headers = getHeaders();
+    const response = await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred }, { headers });
     return response.data;
   } catch (error) {
     console.error('Error toggling star status:', error);
@@ -102,11 +104,11 @@ export const toggleStarPlan = async (planId, isStarred) => {
 
 export const savePlan = async (planParams, generatedPlan) => {
   try {
-    const config = getAuthHeader();
+    const headers = getHeaders();
     const response = await axios.post(`${API_URL}/plans/save`, {
       params: planParams,
       plan: generatedPlan
-    }, config);
+    }, { headers });
     return response.data;
   } catch (error) {
     console.error('Error saving study plan:', error);

@@ -38,16 +38,18 @@ const handleSubmit = async (formParams) => {
   setError(null);
 
   try {
-    // Use the updated service function instead of direct axios call
     const response = await generateStudyPlan(formParams, false);
 
-    if (response.data && response.data.plan) {
+    if (response && response.success && response.data && response.data.plan) {
+      console.log("Plan generated:", response.data.plan);
       setGeneratedPlan(response.data.plan);
       setPlanId(null);
     } else {
+      console.error("Failed to generate plan");
       setError("Failed to generate plan. Please try again.");
     }
   } catch (error) {
+    console.error("Error generating plan:", error);
     setError("An error occurred while generating your plan. Please try again.");
   } finally {
     setLoading(false);
