@@ -7,6 +7,7 @@ import { Loader } from '../components/common';
 import { FaStar, FaChartLine, FaPlus, FaCalendarAlt, FaBookOpen, FaSync } from 'react-icons/fa';
 import { auth } from '../services/firebase';
 import axios from 'axios';
+import { getUserPlans } from '../services/planService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -23,52 +24,56 @@ const Home = () => {
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Function to fetch user plans
-  const fetchUserPlans = async () => {
-    try {
-      setDashboardLoading(true);
-      const token = await auth.currentUser.getIdToken();
-      const response = await axios.get(`${API_URL}/plans`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+// client/src/pages/Home.jsx (update the fetch plans function)
+const fetchUserPlans = async () => {
+  try {
+    setDashboardLoading(true);
+    
+    if (!auth.currentUser) {
+      setStats({
+        total: 0,
+        inProgress: 0,
+        completed: 0,
+        starred: 0
       });
-
-      if (response.data && response.data.data) {
-        const userPlans = response.data.data;
-
-        // Calculate stats
-        const inProgressPlans = userPlans.filter(plan => plan.status === 'active' && plan.progress < 100);
-        const completedPlans = userPlans.filter(plan => plan.status === 'active' && plan.progress === 100);
-        const starredPlans = userPlans.filter(plan => plan.isStarred);
-
-        setStats({
-          total: userPlans.length,
-          inProgress: inProgressPlans.length,
-          completed: completedPlans.length,
-          starred: starredPlans.length
-        });
-
-        // Get recent in-progress plans
-        setRecentPlans(inProgressPlans.slice(0, 3));
-      } else {
-        setStats({
-          total: 0,
-          inProgress: 0,
-          completed: 0,
-          starred: 0
-        });
-        setRecentPlans([]);
-      }
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-    } finally {
+      setRecentPlans([]);
       setDashboardLoading(false);
-      setRefreshing(false);
-      setInitialized(true);
+      return;
     }
-  };
-
+    
+    const response = await getUserPlans();
+    
+    if (response.success && response.data) {
+      const userPlans = response.data;
+      
+      const inProgressPlans = userPlans.filter(plan => plan.status === 'active' && plan.progress < 100);
+      const completedPlans = userPlans.filter(plan => plan.status === 'active' && plan.progress === 100);
+      const starredPlans = userPlans.filter(plan => plan.isStarred);
+      
+      setStats({
+        total: userPlans.length,
+        inProgress: inProgressPlans.length,
+        completed: completedPlans.length,
+        starred: starredPlans.length
+      });
+      
+      setRecentPlans(inProgressPlans.slice(0, 3));
+    } else {
+      setStats({
+        total: 0,
+        inProgress: 0,
+        completed: 0,
+        starred: 0
+      });
+      setRecentPlans([]);
+    }
+  } catch (err) {
+    console.error('Error fetching dashboard data:', err);
+  } finally {
+    setDashboardLoading(false);
+    setInitialized(true);
+  }
+};
   // Fetch plans on component mount
   useEffect(() => {
     if (auth.currentUser) {

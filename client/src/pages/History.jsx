@@ -1,4 +1,3 @@
-// client/src/pages/History.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -17,6 +16,7 @@ import { FaSearch, FaTimes, FaPlus, FaStar, FaRegStar } from 'react-icons/fa';
 import axios from 'axios';
 import { Loader } from '../components/common';
 import { auth } from '../services/firebase';
+import { getUserPlans } from '../services/planService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -27,33 +27,34 @@ const History = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   
-useEffect(() => {
-  const fetchPlans = async () => {
-    try {
-      setLoading(true);
-      const token = await auth.currentUser.getIdToken();
-      const response = await axios.get(`${API_URL}/plans`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoading(true);
+        if (!auth.currentUser) {
+          setPlans([]);
+          setError('Please log in to view your plans');
+          setLoading(false);
+          return;
         }
-      });
-      if (response.data && response.data.data) {
-        setPlans(response.data.data);
-      } else {
-        setPlans([]);
+        
+        const response = await getUserPlans();
+        if (response.data && response.success) {
+          setPlans(response.data);
+        } else {
+          setPlans([]);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching plans:', err);
+        setError('Failed to load your study plans. Please try again later.');
+      } finally {
+        setLoading(false);
       }
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching plans:', err);
-      setError('Failed to load your study plans. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  fetchPlans();
-}, []);
-
+    };
+    
+    fetchPlans();
+  }, []);
 // And handleToggleStar function
 const handleToggleStar = async (e, planId, isStarred) => {
   e.preventDefault();

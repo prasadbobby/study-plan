@@ -8,7 +8,8 @@ import PlanPreview from '../components/generate/PlanPreview';
 import { Loader } from '../components/common';
 import { FaSave, FaTimes, FaChartLine, FaLightbulb, FaBookOpen } from 'react-icons/fa';
 import { auth } from '../services/firebase';
-
+// client/src/pages/Generate.jsx (add to imports)
+import { generateStudyPlan, savePlan } from '../services/planService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -37,14 +38,11 @@ const handleSubmit = async (formParams) => {
   setError(null);
 
   try {
-    const response = await axios.post(`${API_URL}/plans/generate?save=false`, formParams, {
-      headers: {
-        Authorization: `Bearer ${await auth.currentUser.getIdToken()}`
-      }
-    });
+    // Use the updated service function instead of direct axios call
+    const response = await generateStudyPlan(formParams, false);
 
-    if (response.data && response.data.data && response.data.data.plan) {
-      setGeneratedPlan(response.data.data.plan);
+    if (response.data && response.data.plan) {
+      setGeneratedPlan(response.data.plan);
       setPlanId(null);
     } else {
       setError("Failed to generate plan. Please try again.");
@@ -56,24 +54,17 @@ const handleSubmit = async (formParams) => {
   }
 };
 
-// And handleSavePlan function
 const handleSavePlan = async () => {
   if (!generatedPlan || !planParams) return;
 
   setIsSaving(true);
 
   try {
-    const response = await axios.post(`${API_URL}/plans/save`, {
-      params: planParams,
-      plan: generatedPlan
-    }, {
-      headers: {
-        Authorization: `Bearer ${await auth.currentUser.getIdToken()}`
-      }
-    });
+    // Use the updated service function
+    const response = await savePlan(planParams, generatedPlan);
 
-    if (response.data && response.data.data && response.data.data.planId) {
-      setPlanId(response.data.data.planId);
+    if (response.data && response.data.planId) {
+      setPlanId(response.data.planId);
       setShowSuccessModal(true);
     } else {
       setError("Failed to save plan. Please try again.");

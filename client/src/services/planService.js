@@ -4,26 +4,21 @@ import { auth } from './firebase';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-const getAuthHeader = async () => {
+const getAuthHeader = () => {
   const currentUser = auth.currentUser;
-  if (!currentUser) {
-    throw new Error('User not authenticated');
-  }
-  
-  const token = await currentUser.getIdToken();
   return {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-User-ID': currentUser ? currentUser.uid : 'default-user'
     }
   };
 };
 
 export const generateStudyPlan = async (planParams, saveToDatabase = true) => {
   try {
-    const authConfig = await getAuthHeader();
+    const config = getAuthHeader();
     const url = saveToDatabase ? '/plans/generate' : '/plans/generate?save=false';
-    const response = await axios.post(`${API_URL}${url}`, planParams, authConfig);
+    const response = await axios.post(`${API_URL}${url}`, planParams, config);
     return response.data;
   } catch (error) {
     console.error('Error generating study plan:', error);
@@ -33,8 +28,8 @@ export const generateStudyPlan = async (planParams, saveToDatabase = true) => {
 
 export const getUserPlans = async () => {
   try {
-    const authConfig = await getAuthHeader();
-    const response = await axios.get(`${API_URL}/plans`, authConfig);
+    const config = getAuthHeader();
+    const response = await axios.get(`${API_URL}/plans`, config);
     return response.data;
   } catch (error) {
     console.error('Error fetching user plans:', error);
@@ -44,8 +39,8 @@ export const getUserPlans = async () => {
 
 export const getPlan = async (planId) => {
   try {
-    const authConfig = await getAuthHeader();
-    const response = await axios.get(`${API_URL}/plans/${planId}`, authConfig);
+    const config = getAuthHeader();
+    const response = await axios.get(`${API_URL}/plans/${planId}`, config);
     return response.data;
   } catch (error) {
     console.error('Error fetching plan:', error);
@@ -55,8 +50,8 @@ export const getPlan = async (planId) => {
 
 export const updatePlan = async (planId, updates) => {
   try {
-    const authConfig = await getAuthHeader();
-    const response = await axios.put(`${API_URL}/plans/${planId}`, updates, authConfig);
+    const config = getAuthHeader();
+    const response = await axios.put(`${API_URL}/plans/${planId}`, updates, config);
     return response.data;
   } catch (error) {
     console.error('Error updating plan:', error);
@@ -66,8 +61,8 @@ export const updatePlan = async (planId, updates) => {
 
 export const deletePlan = async (planId) => {
   try {
-    const authConfig = await getAuthHeader();
-    const response = await axios.delete(`${API_URL}/plans/${planId}`, authConfig);
+    const config = getAuthHeader();
+    const response = await axios.delete(`${API_URL}/plans/${planId}`, config);
     return response.data;
   } catch (error) {
     console.error('Error deleting plan:', error);
@@ -85,8 +80,8 @@ export const updateProgress = async (planId, progressData) => {
       throw new Error('Completed topics must be an array');
     }
     
-    const authConfig = await getAuthHeader();
-    const response = await axios.patch(`${API_URL}/plans/${planId}/progress`, progressData, authConfig);
+    const config = getAuthHeader();
+    const response = await axios.patch(`${API_URL}/plans/${planId}/progress`, progressData, config);
     return response.data;
   } catch (error) {
     console.error('Error updating progress:', error);
@@ -96,8 +91,8 @@ export const updateProgress = async (planId, progressData) => {
 
 export const toggleStarPlan = async (planId, isStarred) => {
   try {
-    const authConfig = await getAuthHeader();
-    const response = await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred }, authConfig);
+    const config = getAuthHeader();
+    const response = await axios.patch(`${API_URL}/plans/${planId}/star`, { isStarred }, config);
     return response.data;
   } catch (error) {
     console.error('Error toggling star status:', error);
@@ -107,11 +102,11 @@ export const toggleStarPlan = async (planId, isStarred) => {
 
 export const savePlan = async (planParams, generatedPlan) => {
   try {
-    const authConfig = await getAuthHeader();
+    const config = getAuthHeader();
     const response = await axios.post(`${API_URL}/plans/save`, {
       params: planParams,
       plan: generatedPlan
-    }, authConfig);
+    }, config);
     return response.data;
   } catch (error) {
     console.error('Error saving study plan:', error);

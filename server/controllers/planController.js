@@ -1,5 +1,5 @@
 // server/controllers/planController.js
-const firestoreService = require('../services/firestore');
+const localDataService = require('../services/localDataService');
 const huggingfaceService = require('../services/huggingfaceService');
 const { success, error } = require('../utils/responseFormatter');
 
@@ -14,7 +14,7 @@ exports.generatePlan = async (req, res) => {
       
       let planId = null;
       if (saveToDatabase) {
-        planId = await firestoreService.createPlan(userId, {
+        planId = localDataService.createPlan(userId, {
           ...generatedPlan,
           params: planParams
         });
@@ -37,7 +37,7 @@ exports.savePlan = async (req, res) => {
     const userId = req.user.uid;
     const { params, plan } = req.body;
     
-    const planId = await firestoreService.createPlan(userId, {
+    const planId = localDataService.createPlan(userId, {
       ...plan,
       params: params
     });
@@ -54,7 +54,7 @@ exports.savePlan = async (req, res) => {
 exports.getUserPlans = async (req, res) => {
   try {
     const userId = req.user.uid;
-    const plans = await firestoreService.getUserPlans(userId);
+    const plans = localDataService.getUserPlans(userId);
     
     res.status(200).json(success(plans));
   } catch (err) {
@@ -67,12 +67,8 @@ exports.getPlan = async (req, res) => {
     const userId = req.user.uid;
     const planId = req.params.planId;
     
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    
     try {
-      const plan = await firestoreService.getPlan(userId, planId);
+      const plan = localDataService.getPlan(userId, planId);
       
       res.status(200).json(success(plan));
     } catch (err) {
@@ -92,7 +88,7 @@ exports.updatePlan = async (req, res) => {
     const planId = req.params.planId;
     const updates = req.body;
     
-    await firestoreService.updatePlan(userId, planId, updates);
+    localDataService.updatePlan(userId, planId, updates);
     
     res.status(200).json(success(null, "Plan updated successfully"));
   } catch (err) {
@@ -105,7 +101,7 @@ exports.deletePlan = async (req, res) => {
     const userId = req.user.uid;
     const planId = req.params.planId;
     
-    await firestoreService.deletePlan(userId, planId);
+    localDataService.deletePlan(userId, planId);
     
     res.status(200).json(success(null, "Plan deleted successfully"));
   } catch (err) {
@@ -127,7 +123,7 @@ exports.updateProgress = async (req, res) => {
       return res.status(400).json(error("Completed topics must be an array"));
     }
     
-    await firestoreService.updateProgress(userId, planId, progressData);
+    localDataService.updateProgress(userId, planId, progressData);
     
     res.status(200).json(success({ 
       updated: true,
@@ -146,7 +142,7 @@ exports.toggleStarPlan = async (req, res) => {
     const planId = req.params.planId;
     const { isStarred } = req.body;
     
-    await firestoreService.toggleStarPlan(userId, planId, isStarred);
+    localDataService.toggleStarPlan(userId, planId, isStarred);
     
     res.status(200).json(success(null, isStarred ? "Plan starred successfully" : "Plan unstarred successfully"));
   } catch (err) {

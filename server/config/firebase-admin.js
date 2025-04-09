@@ -4,57 +4,26 @@ require('dotenv').config();
 
 let firebaseApp;
 
-// Check if app is already initialized
+// For development, use a service account key file
 try {
+  // Check if already initialized
   firebaseApp = admin.app();
 } catch (e) {
-  // Initialize app if not already done
   try {
-    // First try using service account file
-    try {
-      const serviceAccount = require('../firebase-service-account.json');
-      firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-      console.log("Firebase Admin initialized with service account file");
-    } catch (fileError) {
-      // If file not found, try using environment variables
-      console.log("Service account file not found, trying environment variables");
-      
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY 
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
-        : undefined;
-        
-      if (!process.env.FIREBASE_PROJECT_ID || !privateKey) {
-        throw new Error("Firebase credentials not found in environment variables");
-      }
-      
-      const serviceAccount = {
-        type: 'service_account',
-        project_id: process.env.FIREBASE_PROJECT_ID,
-        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-        private_key: privateKey,
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        client_id: process.env.FIREBASE_CLIENT_ID
-      };
-      
-      firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-      console.log("Firebase Admin initialized with environment variables");
-    }
-  } catch (initError) {
-    console.error("Failed to initialize Firebase Admin:", initError);
+    // Initialize with service account
+    const serviceAccount = require('../firebase-service-account.json');
+    firebaseApp = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("Firebase Admin initialized with service account file");
+  } catch (fileError) {
+    console.error("Error initializing Firebase Admin:", fileError);
     
-    if (process.env.NODE_ENV !== 'production') {
-      // For development only - provide a mock implementation
-      console.log("⚠️ Using mock Firebase implementation for development");
-      firebaseApp = admin.initializeApp({
-        projectId: 'mock-project-id'
-      }, 'mock-app');
-    } else {
-      throw initError;
-    }
+    // As a fallback for development, initialize with application default credentials
+    firebaseApp = admin.initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || 'study-plan-okcu'
+    });
+    console.log("Firebase Admin initialized with application default credentials");
   }
 }
 
